@@ -9,7 +9,9 @@ pip install macos-media
 
 ### Requirements
 
-Python >= 3.6. I've only tested it with 3.7.4.
+Python >= 3.6
+
+However, I've only actually tested it with 3.7.4.
 
 ## Usage
 
