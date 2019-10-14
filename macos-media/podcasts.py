@@ -8,6 +8,7 @@ import sys
 class LibraryNotFoundException(Exception):
     pass
 
+
 Podcast = namedtuple('Podcast', ('title', 'podcast_id'))
 
 Episode = namedtuple('Episode', ('title', 'publication_date', 'playcount', 'filepath'))
@@ -18,7 +19,7 @@ def _convert_pubdate(pubdate):
     Convert a publication date, as stored in the database, into a datetime.date instance
     """
     offset = datetime.datetime(2001, 1, 1).timestamp()
-    return datetime.date.fromtimestamp(offset+pubdate)
+    return datetime.date.fromtimestamp(offset + pubdate)
 
 
 class PodcastLibrary(object):
@@ -98,4 +99,3 @@ class PodcastLibrary(object):
         episodes = cursor.fetchall()  # list of tuples
         episodes = [Episode(title, _convert_pubdate(pubdate), playcount, self.episode_filepath(uuid)) for (title, pubdate, playcount, uuid) in episodes]
         return episodes
-
