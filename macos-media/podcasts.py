@@ -18,8 +18,10 @@ def _convert_pubdate(pubdate):
     """
     Convert a publication date, as stored in the database, into a datetime.date instance
     """
-    offset = datetime.datetime(2001, 1, 1).timestamp()
-    return datetime.date.fromtimestamp(offset + pubdate)
+    if pubdate:
+        offset = datetime.datetime(2001, 1, 1).timestamp()
+        return datetime.date.fromtimestamp(offset + pubdate)
+    return None
 
 
 class PodcastLibrary(object):
@@ -85,7 +87,7 @@ class PodcastLibrary(object):
 
     def episodes_for_show(self, podcast=None, podcast_title=None, podcast_id=None):
         """
-        Given a podcast (as a Podcast instance, a podcasttitle or a podcast id)
+        Given a podcast (as a Podcast instance, a podcast title or a podcast id)
         returns a list of Episode objects associated with that show.
         """
         if not podcast:
