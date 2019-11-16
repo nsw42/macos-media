@@ -10,8 +10,17 @@ class LibraryNotFoundException(Exception):
 
 
 Podcast = namedtuple('Podcast', ('title', 'podcast_id'))
+Podcast.__doc__ = 'Information about a podcast (a show)'
+Podcast.title.__doc__ = 'The title of the podcast show (str)'
+Podcast.podcast_id.__doc__ = 'The unique identifier of this podcast id (int)'
+
 
 Episode = namedtuple('Episode', ('title', 'publication_date', 'playcount', 'filepath'))
+Episode.__doc__ = 'Information about a single episode from a podcast'
+Episode.title.__doc__ = 'The title of this episode (str)'
+Episode.publication_date.__doc__ = 'The date that the episode was released (datetime.date)'
+Episode.playcount.__doc__ = 'The number of times the episode has been played (int)'
+Episode.filepath.__doc__ = 'The absolute path to the episode file (pathlib.Path)'
 
 
 def _convert_pubdate(pubdate):
@@ -25,6 +34,9 @@ def _convert_pubdate(pubdate):
 
 
 class PodcastLibrary(object):
+    """A class to access the library of podcasts on macOS
+    """
+
     @staticmethod
     def _default_podcast_library_dir():
         path = pathlib.Path.home()
@@ -37,6 +49,13 @@ class PodcastLibrary(object):
         return path
 
     def __init__(self, library_dir=None):
+        """The main PodcastLibrary class
+
+        Args:
+           library_dir (str or pathlib.Path): The podcast library path.
+                                              library_dir / Documents / MTLibrary.sqlite must exist
+
+        """
         if library_dir:
             library_dir = pathlib.Path(library_dir)
         else:
@@ -79,6 +98,9 @@ class PodcastLibrary(object):
         return Podcast(*podcast)
 
     def episode_filepath(self, episode_uuid):
+        """
+        Get the path to the episode file with the given identifier
+        """
         directory = self.library_dir / 'Library' / 'Cache'
         files = list(directory.glob('%s.*' % episode_uuid))
         if len(files) > 1:
