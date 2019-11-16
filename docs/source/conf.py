@@ -38,6 +38,7 @@ sys.path.insert(0, os.path.abspath('../..'))
 project = 'macos-media'
 copyright = '2019, Neil Walker'
 author = 'Neil Walker'
+master_doc = 'index'
 
 
 # -- General configuration ---------------------------------------------------
