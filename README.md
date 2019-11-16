@@ -3,9 +3,7 @@ This module provides classes for (read-only, currently) access to the music and 
 
 ## Installation
 
-```
-pip install macos-media
-```
+TBD.
 
 ### Requirements
 
@@ -15,4 +13,4 @@ However, I've only actually tested it with 3.7.4.
 
 ## Usage
 
-Documentation to follow
+See [https://macos-media.readthedocs.io/en/latest/](https://macos-media.readthedocs.io/en/latest/)
