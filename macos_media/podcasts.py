@@ -15,12 +15,13 @@ Podcast.title.__doc__ = 'The title of the podcast show (str)'
 Podcast.podcast_id.__doc__ = 'The unique identifier of this podcast id (int)'
 
 
-Episode = namedtuple('Episode', ('title', 'publication_date', 'playcount', 'filepath'))
+Episode = namedtuple('Episode', ('title', 'publication_date', 'playcount', 'filepath', 'uuid'))
 Episode.__doc__ = 'Information about a single episode from a podcast'
 Episode.title.__doc__ = 'The title of this episode (str)'
 Episode.publication_date.__doc__ = 'The date that the episode was released (datetime.date)'
 Episode.playcount.__doc__ = 'The number of times the episode has been played (int)'
 Episode.filepath.__doc__ = 'The absolute path to the episode file (pathlib.Path)'
+Episode.uuid.__doc__ = 'The UUID of this episode (str)'
 
 
 def _convert_pubdate(pubdate):
@@ -121,5 +122,5 @@ class PodcastLibrary(object):
             raise ValueError("Podcast not found")
         cursor = self.db.execute('SELECT ZTITLE, ZPUBDATE, ZPLAYCOUNT, ZUUID FROM ZMTEPISODE WHERE ZPODCAST=? ORDER BY ZPUBDATE', (podcast.podcast_id, ))
         episodes = cursor.fetchall()  # list of tuples
-        episodes = [Episode(title, _convert_pubdate(pubdate), playcount, self.episode_filepath(uuid)) for (title, pubdate, playcount, uuid) in episodes]
+        episodes = [Episode(title, _convert_pubdate(pubdate), playcount, self.episode_filepath(uuid), uuid) for (title, pubdate, playcount, uuid) in episodes]
         return episodes
