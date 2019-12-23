@@ -143,6 +143,10 @@ class PodcastLibrary(object):
         return episodes
 
     def get_episode_by_uuid(self, episode_uuid):
+        """
+        Return an Episode for the specified UUID.
+        Returns None if the UUID was not found.
+        """
         cursor = self.db.execute('SELECT ZTITLE, ZPUBDATE, ZPLAYCOUNT, ZPODCAST FROM ZMTEPISODE WHERE ZUUID=?',
                                  (episode_uuid, ))
         episodes = cursor.fetchall()  # list (of length 0..1) of tuples

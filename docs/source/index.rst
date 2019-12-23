@@ -17,7 +17,7 @@ podcasts
 
 
 .. autoclass:: macos_media.podcasts.PodcastLibrary
-   :members: __init__, available_podcasts, get_podcast_by_title, get_podcast_by_id, episode_filepath, episode_filepath, episodes_for_show
+   :members: __init__, available_podcasts, get_podcast_by_title, get_podcast_by_id, episode_filepath, episode_filepath, episodes_for_show, get_episode_by_uuid
    :undoc-members:
 
 
