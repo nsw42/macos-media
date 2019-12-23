@@ -141,3 +141,20 @@ class PodcastLibrary(object):
         episodes = cursor.fetchall()  # list of tuples
         episodes = [Episode(title, _convert_pubdate(pubdate), playcount, self.episode_filepath(uuid), uuid, podcast) for (title, pubdate, playcount, uuid) in episodes]
         return episodes
+
+    def get_episode_by_uuid(self, episode_uuid):
+        cursor = self.db.execute('SELECT ZTITLE, ZPUBDATE, ZPLAYCOUNT, ZPODCAST FROM ZMTEPISODE WHERE ZUUID=?',
+                                 (episode_uuid, ))
+        episodes = cursor.fetchall()  # list (of length 0..1) of tuples
+        if episodes:
+            assert len(episodes) == 1
+            title, pubdate, playcount, podcast_id = episodes[0]
+            podcast = self.get_podcast_by_id(podcast_id)
+            return Episode(title,
+                           _convert_pubdate(pubdate),
+                           playcount,
+                           self.episode_filepath(episode_uuid),
+                           episode_uuid,
+                           podcast)
+        else:
+            return None
