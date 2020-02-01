@@ -24,7 +24,6 @@ Episode.filepath.__doc__ = 'The absolute path to the episode file (pathlib.Path)
 Episode.uuid.__doc__ = 'The UUID of this episode (str)'
 Episode.podcast.__doc__ = 'The Podcast object to which this episode relates'
 
-
 def _convert_pubdate(pubdate):
     """
     Convert a publication date, as stored in the database, into a datetime.date instance
@@ -33,6 +32,14 @@ def _convert_pubdate(pubdate):
         offset = datetime.datetime(2001, 1, 1).timestamp()
         return datetime.date.fromtimestamp(offset + pubdate)
     return None
+
+
+def _episode_playcount(playcount, manually_played_date):
+    if playcount > 0:
+        return playcount
+    if manually_played_date:
+        return 1
+    return playcount
 
 
 class PodcastCache(object):
@@ -136,10 +143,15 @@ class PodcastLibrary(object):
                 podcast = self.get_podcast_by_id(podcast_id)
         if not podcast:
             raise ValueError("Podcast not found")
-        cursor = self.db.execute('SELECT ZTITLE, ZPUBDATE, ZPLAYCOUNT, ZUUID FROM ZMTEPISODE WHERE ZPODCAST=? ORDER BY ZPUBDATE',
+        cursor = self.db.execute('SELECT ZTITLE, ZPUBDATE, ZPLAYCOUNT, ZLASTUSERMARKEDASPLAYEDDATE, ZUUID FROM ZMTEPISODE WHERE ZPODCAST=? ORDER BY ZPUBDATE',
                                  (podcast.podcast_id, ))
         episodes = cursor.fetchall()  # list of tuples
-        episodes = [Episode(title, _convert_pubdate(pubdate), playcount, self.episode_filepath(uuid), uuid, podcast) for (title, pubdate, playcount, uuid) in episodes]
+        episodes = [Episode(title,
+                            _convert_pubdate(pubdate),
+                            _episode_playcount(playcount, manually_played_date),
+                            self.episode_filepath(uuid),
+                            uuid,
+                            podcast) for (title, pubdate, playcount, manually_played_date, uuid) in episodes]
         return episodes
 
     def get_episode_by_uuid(self, episode_uuid):
@@ -147,16 +159,17 @@ class PodcastLibrary(object):
         Return an Episode for the specified UUID.
         Returns None if the UUID was not found.
         """
-        cursor = self.db.execute('SELECT ZTITLE, ZPUBDATE, ZPLAYCOUNT, ZPODCAST FROM ZMTEPISODE WHERE ZUUID=?',
+        # TODO: It looks like ZASSETURL contains the local path, encoded as file:///blah.mp3
+        cursor = self.db.execute('SELECT ZTITLE, ZPUBDATE, ZPLAYCOUNT, ZLASTUSERMARKEDASPLAYEDDATE, ZPODCAST FROM ZMTEPISODE WHERE ZUUID=?',
                                  (episode_uuid, ))
         episodes = cursor.fetchall()  # list (of length 0..1) of tuples
         if episodes:
             assert len(episodes) == 1
-            title, pubdate, playcount, podcast_id = episodes[0]
+            title, pubdate, playcount, manually_played_date, podcast_id = episodes[0]
             podcast = self.get_podcast_by_id(podcast_id)
             return Episode(title,
                            _convert_pubdate(pubdate),
-                           playcount,
+                           _episode_playcount(playcount, manually_played_date),
                            self.episode_filepath(episode_uuid),
                            episode_uuid,
                            podcast)
