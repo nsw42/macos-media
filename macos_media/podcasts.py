@@ -131,6 +131,16 @@ class PodcastLibrary(object):
             print(f"WARNING: Multiple files found for episode {episode_uuid}", file=sys.stderr)
         return files[0] if files else None
 
+    def _episode_from_tuple(self, episode_tuple):
+        title, pubdate, playcount, manually_played_date, podcast_id, episode_uuid = episode_tuple
+        podcast = self.get_podcast_by_id(podcast_id)
+        return Episode(title,
+                       _convert_pubdate(pubdate),
+                       _episode_playcount(playcount, manually_played_date),
+                       self.episode_filepath(episode_uuid),
+                       episode_uuid,
+                       podcast)
+
     def episodes_for_show(self, podcast=None, podcast_title=None, podcast_id=None):
         """
         Given a podcast (as a Podcast instance, a podcast title or a podcast id)
@@ -143,15 +153,10 @@ class PodcastLibrary(object):
                 podcast = self.get_podcast_by_id(podcast_id)
         if not podcast:
             raise ValueError("Podcast not found")
-        cursor = self.db.execute('SELECT ZTITLE, ZPUBDATE, ZPLAYCOUNT, ZLASTUSERMARKEDASPLAYEDDATE, ZUUID FROM ZMTEPISODE WHERE ZPODCAST=? ORDER BY ZPUBDATE',
+        cursor = self.db.execute('SELECT ZTITLE, ZPUBDATE, ZPLAYCOUNT, ZLASTUSERMARKEDASPLAYEDDATE, ZPODCAST, ZUUID FROM ZMTEPISODE WHERE ZPODCAST=? ORDER BY ZPUBDATE',
                                  (podcast.podcast_id, ))
         episodes = cursor.fetchall()  # list of tuples
-        episodes = [Episode(title,
-                            _convert_pubdate(pubdate),
-                            _episode_playcount(playcount, manually_played_date),
-                            self.episode_filepath(uuid),
-                            uuid,
-                            podcast) for (title, pubdate, playcount, manually_played_date, uuid) in episodes]
+        episodes = [self._episode_from_tuple(episode_tuple) for episode_tuple in episodes]
         return episodes
 
     def get_episode_by_uuid(self, episode_uuid):
@@ -160,18 +165,11 @@ class PodcastLibrary(object):
         Returns None if the UUID was not found.
         """
         # TODO: It looks like ZASSETURL contains the local path, encoded as file:///blah.mp3
-        cursor = self.db.execute('SELECT ZTITLE, ZPUBDATE, ZPLAYCOUNT, ZLASTUSERMARKEDASPLAYEDDATE, ZPODCAST FROM ZMTEPISODE WHERE ZUUID=?',
+        cursor = self.db.execute('SELECT ZTITLE, ZPUBDATE, ZPLAYCOUNT, ZLASTUSERMARKEDASPLAYEDDATE, ZPODCAST, ZUUID FROM ZMTEPISODE WHERE ZUUID=?',
                                  (episode_uuid, ))
         episodes = cursor.fetchall()  # list (of length 0..1) of tuples
         if episodes:
             assert len(episodes) == 1
-            title, pubdate, playcount, manually_played_date, podcast_id = episodes[0]
-            podcast = self.get_podcast_by_id(podcast_id)
-            return Episode(title,
-                           _convert_pubdate(pubdate),
-                           _episode_playcount(playcount, manually_played_date),
-                           self.episode_filepath(episode_uuid),
-                           episode_uuid,
-                           podcast)
+            return self._episode_from_tuple(episodes[0])
         else:
             return None
