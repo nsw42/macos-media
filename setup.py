@@ -5,7 +5,7 @@ with open("README.md") as handle:
 
 setuptools.setup(
     name='macos-media',
-    version='1.0.0',
+    version='1.0.1',
     author='Neil Walker',
     author_email='neil@wynded.co.uk',
     description='Access to the macOS media libraries',
