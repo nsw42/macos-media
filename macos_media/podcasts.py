@@ -33,6 +33,14 @@ def _convert_pubdate(pubdate):
         return datetime.date.fromtimestamp(offset + pubdate)
     return None
 
+def _convert_datetime_to_pubdate(dt):
+    """
+    Convert a datetime.date to a publication date, as stored in the database.
+    """
+    if dt:
+        dt = datetime.datetime.combine(dt, datetime.datetime.min.time())
+        return dt.timestamp() - datetime.datetime(2001, 1, 1).timestamp()
+    return None
 
 def _episode_playcount(playcount, manually_played_date):
     if playcount > 0:
@@ -141,10 +149,23 @@ class PodcastLibrary(object):
                        episode_uuid,
                        podcast)
 
-    def episodes_for_show(self, podcast=None, podcast_title=None, podcast_id=None):
+    def episodes_for_show(self,
+                          podcast=None, podcast_title=None, podcast_id=None,
+                          pubdate_after=None,
+                          pubdate_before=None,
+                          played=None):
         """
         Given a podcast (as a Podcast instance, a podcast title or a podcast id)
         returns a list of Episode objects associated with that show.
+
+        If pubdate_after is specified, only episodes published on or after the
+        given date (datetime.date) will be included.
+
+        If pubdate_before is specified, only episodes published on or before the
+        given date (datetime.date) will be included.
+
+        If played==True, only episodes that have been played will be included.
+        If played==False, only episodes that have not been played will be included.
         """
         if not podcast:
             if podcast_title:
@@ -153,8 +174,23 @@ class PodcastLibrary(object):
                 podcast = self.get_podcast_by_id(podcast_id)
         if not podcast:
             raise ValueError("Podcast not found")
-        cursor = self.db.execute('SELECT ZTITLE, ZPUBDATE, ZPLAYCOUNT, ZLASTUSERMARKEDASPLAYEDDATE, ZPODCAST, ZUUID FROM ZMTEPISODE WHERE ZPODCAST=? ORDER BY ZPUBDATE',
-                                 (podcast.podcast_id, ))
+        query = 'SELECT ZTITLE, ZPUBDATE, ZPLAYCOUNT, ZLASTUSERMARKEDASPLAYEDDATE, ZPODCAST, ZUUID FROM ZMTEPISODE WHERE ZPODCAST=?'
+        args = [podcast.podcast_id]
+        if pubdate_after:
+            query += ' AND ZPUBDATE >= ?'
+            args.append(_convert_datetime_to_pubdate(pubdate_after))
+        if pubdate_before:
+            # if we use <= pubdate_before 2020-01-01, that's <= 2020-01-01 00:00:00
+            # so add a day, and test for <
+            query += ' AND ZPUBDATE < ?'
+            args.append(_convert_datetime_to_pubdate(pubdate_before + datetime.timedelta(days=1)))
+        if played is True:
+            query += ' AND (ZPLAYCOUNT > 0 OR ZLASTUSERMARKEDASPLAYEDDATE > 0)'
+        elif played is False:
+            query += ' AND (ZPLAYCOUNT = 0 AND ZLASTUSERMARKEDASPLAYEDDATE IS NULL)'
+        
+        query += ' ORDER BY ZPUBDATE'
+        cursor = self.db.execute(query, args)
         episodes = cursor.fetchall()  # list of tuples
         episodes = [self._episode_from_tuple(episode_tuple) for episode_tuple in episodes]
         return episodes
