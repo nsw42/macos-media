@@ -94,10 +94,8 @@ class PodcastLibrary(object):
                                               library_dir / Documents / MTLibrary.sqlite must exist
 
         """
-        if library_dir:
-            library_dir = pathlib.Path(library_dir)
-        else:
-            library_dir = PodcastLibrary._default_podcast_library_dir()
+
+        library_dir = pathlib.Path(library_dir) if library_dir else PodcastLibrary._default_podcast_library_dir()
         if not library_dir.is_dir():
             raise LibraryNotFoundException(f"Library directory '{library_dir}' not found")
         self.library_dir = library_dir
