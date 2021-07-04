@@ -24,6 +24,7 @@ Episode.filepath.__doc__ = 'The absolute path to the episode file (pathlib.Path)
 Episode.uuid.__doc__ = 'The UUID of this episode (str)'
 Episode.podcast.__doc__ = 'The Podcast object to which this episode relates'
 
+
 def _convert_pubdate(pubdate):
     """
     Convert a publication date, as stored in the database, into a datetime.date instance
@@ -33,6 +34,7 @@ def _convert_pubdate(pubdate):
         return datetime.date.fromtimestamp(offset + pubdate)
     return None
 
+
 def _convert_datetime_to_pubdate(dt):
     """
     Convert a datetime.date to a publication date, as stored in the database.
@@ -41,6 +43,7 @@ def _convert_datetime_to_pubdate(dt):
         dt = datetime.datetime.combine(dt, datetime.datetime.min.time())
         return dt.timestamp() - datetime.datetime(2001, 1, 1).timestamp()
     return None
+
 
 def _episode_playcount(playcount, manually_played_date):
     if playcount > 0:
@@ -174,7 +177,8 @@ class PodcastLibrary(object):
                 podcast = self.get_podcast_by_id(podcast_id)
         if not podcast:
             raise ValueError("Podcast not found")
-        query = 'SELECT ZTITLE, ZPUBDATE, ZPLAYCOUNT, ZLASTUSERMARKEDASPLAYEDDATE, ZPODCAST, ZUUID FROM ZMTEPISODE WHERE ZPODCAST=?'
+        query = 'SELECT ZTITLE, ZPUBDATE, ZPLAYCOUNT, ZLASTUSERMARKEDASPLAYEDDATE, ZPODCAST, ZUUID ' \
+                + 'FROM ZMTEPISODE WHERE ZPODCAST=?'
         args = [podcast.podcast_id]
         if pubdate_after:
             query += ' AND ZPUBDATE >= ?'
@@ -188,7 +192,7 @@ class PodcastLibrary(object):
             query += ' AND (ZPLAYCOUNT > 0 OR ZLASTUSERMARKEDASPLAYEDDATE > 0)'
         elif played is False:
             query += ' AND (ZPLAYCOUNT = 0 AND ZLASTUSERMARKEDASPLAYEDDATE IS NULL)'
-        
+
         query += ' ORDER BY ZPUBDATE'
         cursor = self.db.execute(query, args)
         episodes = cursor.fetchall()  # list of tuples
@@ -201,7 +205,8 @@ class PodcastLibrary(object):
         Returns None if the UUID was not found.
         """
         # TODO: It looks like ZASSETURL contains the local path, encoded as file:///blah.mp3
-        cursor = self.db.execute('SELECT ZTITLE, ZPUBDATE, ZPLAYCOUNT, ZLASTUSERMARKEDASPLAYEDDATE, ZPODCAST, ZUUID FROM ZMTEPISODE WHERE ZUUID=?',
+        cursor = self.db.execute('SELECT ZTITLE, ZPUBDATE, ZPLAYCOUNT, ZLASTUSERMARKEDASPLAYEDDATE, ZPODCAST, ZUUID '
+                                 + 'FROM ZMTEPISODE WHERE ZUUID=?',
                                  (episode_uuid, ))
         episodes = cursor.fetchall()  # list (of length 0..1) of tuples
         if episodes:
